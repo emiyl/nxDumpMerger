@@ -14,7 +14,7 @@ class App:
         frame = Frame(master)
         frame.grid(padx=20)
        
-        self.title_label = Label(frame, text="nxDumpMerger v0.2.0")
+        self.title_label = Label(frame, text="nxDumpMerger v0.2.1")
         self.title_label.grid(row=0, column=0, columnspan=4, pady=10)
         
         self.input_label = Label(frame, text="Input:")
@@ -86,7 +86,7 @@ class App:
                 os.remove(file_path + x)
         
     def get_input_entry(self):
-        filename = filedialog.askopenfilename(initialdir="./", title="Select your NX dump part")
+        filename = filedialog.askopenfilename(initialdir="~", title="Select your NX dump part")
         extension = filename[filename.rfind('.') - len(filename) + 1:][:2]
         
         if not filename:
@@ -144,6 +144,6 @@ class App:
         self.output_entry.insert(0, dirname)
 
 app = App(root)
-root.title("nxDumpMerger v0.2.0")
+root.title("nxDumpMerger v0.2.1")
 root.config(menu=menubar)
 root.mainloop()
