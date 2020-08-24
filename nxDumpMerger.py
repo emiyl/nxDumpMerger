@@ -211,7 +211,7 @@ class App:
                                                 start = time.time()
                                                 
                                                 file_progress = copied / file_size
-                                                part_progress = (current_part + file_progress) / part_count
+                                                part_progress = (total_size - bytes_remaining) / total_size
                                                 file_progress_bar['value'] = 100 * file_progress
                                                 part_progress_bar['value'] = 100 * part_progress
                                                 self.file_label.config(text=str(round(100 * file_progress, 1)) + "%")
