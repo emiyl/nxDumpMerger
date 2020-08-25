@@ -9,7 +9,7 @@ import sys
 import time
 
 root = Tk()
-version = "0.3.0"
+version = "0.3.1"
 
 def copyfileobj(fsrc, fdst, length=0):
     try:
@@ -90,6 +90,9 @@ class App:
 
         self.merge_dump = Button(end, text="Help", command=self.show_help)
         self.merge_dump.grid(row=0, column=1, padx=10)
+
+        self.merge_dump = Button(end, text="Quit", command=root.quit)
+        self.merge_dump.grid(row=0, column=2, padx=10)
        
         self.title_label = Label(text="written by emiyl")
         self.title_label.grid(pady=(0, 10))
