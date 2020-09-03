@@ -1,5 +1,4 @@
 from tkinter import *
-from tkinter.ttk import *
 from tkinter import filedialog
 from tkinter import messagebox
 import shutil
@@ -7,9 +6,15 @@ import glob
 import os
 import sys
 import time
+import platform
+
+if platform.system() == "Windows":
+    from tkinter.ttk import *
+else:
+    from tkinter.ttk import Progressbar
 
 root = Tk()
-version = "0.3.1"
+version = "0.3.2"
 
 def copyfileobj(fsrc, fdst, length=0):
     try:
