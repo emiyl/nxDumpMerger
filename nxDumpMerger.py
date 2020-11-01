@@ -14,7 +14,7 @@ else:
     from tkinter.ttk import Progressbar
 
 root = Tk()
-version = "0.3.2"
+version = "0.3.3"
 
 def copyfileobj(fsrc, fdst, length=0):
     try:
@@ -310,7 +310,7 @@ class App:
                     return
                 
             if not part_num.isdigit():
-                messagebox.showinfo("Error", "Not a valid part file.")    
+                messagebox.showinfo("Error", "This file is either not a valid part file or has not been named correctly. Please view the Help tab for more information.")
                 return
         else:
             file_path = filename[:-2]
@@ -322,7 +322,7 @@ class App:
                     part_count += 1
             
             if part_count == 0:
-                messagebox.showinfo("Error", "Not a valid part file.")    
+                messagebox.showinfo("Error", "This file is either not a valid part file or has not been named correctly. Please view the Help tab for more information.")
                 return
                     
             for i in range(part_count):
