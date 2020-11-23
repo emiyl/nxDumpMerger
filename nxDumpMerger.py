@@ -14,7 +14,7 @@ else:
     from tkinter.ttk import Progressbar
 
 root = Tk()
-version = "0.3.3"
+version = "0.3.4"
 
 def copyfileobj(fsrc, fdst, length=0):
     try:
