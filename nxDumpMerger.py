@@ -344,6 +344,7 @@ class App:
         dirname = filedialog.askdirectory(initialdir="./", title="Select where you'd like to place your merged dump")
         if not dirname:
             return
+        dirname += '/'
         self.output_entry.delete(0, END)
         self.output_entry.insert(0, dirname)
         
