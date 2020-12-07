@@ -8,363 +8,419 @@ import sys
 import time
 import platform
 
-if platform.system() == "Windows":
+if platform.system() == 'Windows':
     from tkinter.ttk import *
 else:
     from tkinter.ttk import Progressbar
 
 root = Tk()
-version = "0.3.4"
+version = [1,0,0]
+title = f"nxDumpMerger {version[0]}.{version[1]}.{version[2]}"
 
-def copyfileobj(fsrc, fdst, length=0):
-    try:
-        if "b" in fsrc.mode and "b" in fdst.mode and fsrc.readinto:
-            return _copyfileobj_readinto(fsrc, fdst, length)
-    except AttributeError:
-        pass
-
-    if not length:
-        length = shutil.COPY_BUFSIZE
-
-    fsrc_read = fsrc.read
-    fdst_write = fdst.write
-
-    copied = 0
-    while True:
-        buf = fsrc_read(length)
-        if not buf:
-            break
-        fdst_write(buf)
-        copied += len(buf)
-
-READINTO_BUFSIZE = 1024 * 1024
-
-def _copyfileobj_readinto(fsrc, fdst, length=0):
-    fsrc_readinto = fsrc.readinto
-    fdst_write = fdst.write
-
-    if not length:
-        try:
-            file_size = os.stat(fsrc.fileno()).st_size
-        except OSError:
-            file_size = READINTO_BUFSIZE
-        length = min(file_size, READINTO_BUFSIZE)
-
-    copied = 0
-    with memoryview(bytearray(length)) as mv:
-        while True:
-            n = fsrc_readinto(mv)
-            if not n:
-                break
-            elif n < length:
-                with mv[:n] as smv:
-                    fdst.write(smv)
-            else:
-                fdst_write(mv)
-            copied += n
-            file_progress = 100 * (copied / file_size)
-    
-    
 class App:
+    instructionString = "Select one file part and nxDumpMerger will automatically select the rest."
+
+    inOutStrings = [
+        'Input:',
+        'Output:'
+    ]
+    
+    OpenButtonString = '...'
+
+    lowerButtonStrings = [
+        'Merge Dump',
+        'About',
+        'Quit'
+    ]
+    
+    authorString = 'written by emiyl'
+
     def __init__(self, master):
-        self.title_label = Label(text="nxDumpMerger v" + version)
-        self.title_label.grid(pady=10)
+        title_label = Label(text=title)
+        title_label.grid(pady=10)
         
         frame = Frame(master)
         frame.grid(padx=20, column=0)
         
-        self.input_label = Label(frame, text="Input:")
-        self.input_label.grid(row=1, column=0, padx=10)
-        self.input_entry = Entry(frame)
-        self.input_entry.grid(row=1, column=1, columnspan=2)
-        self.merge_dump = Button(frame, text="...", command=self.get_input_entry)
-        self.merge_dump.grid(row=1, column=3, padx=5)
+        for i in range(0,2):
+            inOutLabel = Label(frame, text=self.inOutStrings[i])
+            inOutLabel.grid(row=i+1, column=0, padx=10)
         
-        self.output_label = Label(frame, text="Output:")
-        self.output_label.grid(row=2, column=0, sticky=W)
-        self.output_entry = Entry(frame)
-        self.output_entry.grid(row=2, column=1, columnspan=2)
-        self.merge_dump = Button(frame, text="...", command=self.get_output_entry)
-        self.merge_dump.grid(row=2, column=3, padx=5)
+        self.inputEntry = Entry(frame)
+        self.inputEntry.grid(row=1, column=1, columnspan=2)
+        getInputButton = Button(frame, text=self.OpenButtonString, command=self.getInputEntry)
+        getInputButton.grid(row=1, column=3, padx=5)
+        
+        self.outputEntry = Entry(frame)
+        self.outputEntry.grid(row=2, column=1, columnspan=2)
+        getOutputButton = Button(frame, text=self.OpenButtonString, command=self.getOutputEntry)
+        getOutputButton.grid(row=2, column=3, padx=5)
         
         end = Frame(master)
         end.grid(padx=20, column=0)
+        
+        lowerButton = []
 
-        self.merge_dump = Button(end, text="Merge Dump", command=self.cmd_merge_dump)
-        self.merge_dump.grid(row=0, column=0, pady=10, padx=10)
+        button = Button(end, text=self.lowerButtonStrings[0], command=self.mergeDump)
+        lowerButton.append(button)
 
-        self.merge_dump = Button(end, text="Help", command=self.show_help)
-        self.merge_dump.grid(row=0, column=1, padx=10)
+        button = Button(end, text=self.lowerButtonStrings[1], command=About)
+        lowerButton.append(button)
 
-        self.merge_dump = Button(end, text="Quit", command=root.quit)
-        self.merge_dump.grid(row=0, column=2, padx=10)
+        button = Button(end, text=self.lowerButtonStrings[2], command=root.quit)
+        lowerButton.append(button)
+        
+        for i in range(0,3):
+            lowerButton[i].grid(row=0, column=i, padx=10, pady=10)
        
-        self.title_label = Label(text="written by emiyl")
-        self.title_label.grid(pady=(0, 10))
+        authorLabel = Label(text=self.authorString)
+        authorLabel.grid(pady=(0, 10))
         
-    def show_help(self):
-        help = Tk()
-        help.title("nxDumpMerger Help")
-        help_win = Help(help)
+    def mergeDump(self):
+        inputFile = self.inputEntry.get()
+        outputDir = self.outputEntry.get()
         
-    def cmd_merge_dump(self):
-        input_file = self.input_entry.get()
-        extension  = input_file[input_file.rfind('.') - len(input_file) + 1:][:2]
+        splitPath = os.path.splitext(inputFile)
+        filename  = os.path.basename(splitPath[0])
+        extension = splitPath[1]
         
-        if not input_file:
+        if not filename or not outputDir:
             return
         
-        if extension == "xc":
-            game_name = input_file[input_file.rfind('/') - len(input_file) + 1:][:input_file.rfind('.') - len(input_file) + 1] + "xci"
-            output_file = self.output_entry.get() + game_name
-            file_path   = input_file[:input_file.rfind('.') - len(input_file) + 1] + "xc"
-            part_count  = 0
-            
-            for f in glob.glob(file_path + "*"):
-                if f[f.rfind('.') - len(f) + 1:][2:].isdigit():
-                    part_count += 1
-        else:
-            file_path   = input_file[:-2]
-            game_name   = input_file[:-3]
-            game_name   = game_name[game_name.rfind('/') - len(game_name) + 1:]
-            output_file = self.output_entry.get() + game_name
-            part_count  = 0
-            
-            for f in glob.glob(file_path + "*"):
-                f = f[-2:]
-                if f.isdigit():
-                    part_count += 1
+        if (extension[:3] == '.xc' or extension[:3] == '.ns') and extension[3:].isdigit():   # .xc0 or .ns0
+            if extension[:3] == '.xc':
+                outputFile = filename + '.xci'
+            elif extension[:3] == '.ns':
+                outputFile = filename + '.nsp'
                 
-        current_part = "0"
-        
-        class Merge_dump_window:
-            def __init__(self, master):
-                merge_frame = Frame(master)
-                merge_frame.grid(padx=20, pady=10, column=0)
-                
-                self.title_label = Label(merge_frame, text="Progress - " + game_name)
-                self.title_label.grid(columnspan=2)
-                
-                current_part = 0
-                file_progress = 0
-                eta = 0
-                
-                part_progress_bar = Progressbar(merge_frame, orient = HORIZONTAL, mode = 'determinate')
-                part_progress_bar.grid(row=1, column=0)
-                
-                file_progress_bar = Progressbar(merge_frame, orient = HORIZONTAL, mode = 'determinate')
-                file_progress_bar.grid(row=2, column=0, padx=20)
-               
-                self.part_label = Label(merge_frame)
-                self.part_label.grid(row=1, column=1, pady=10)
-               
-                self.file_label = Label(merge_frame)
-                self.file_label.grid(row=2, column=1, pady=10)
-                
-                self.speed_label = Label(merge_frame, text="Speed:")
-                self.speed_label.grid(columnspan=2)
-                
-                self.eta_label = Label(merge_frame, text="ETA:")
-                self.eta_label.grid(columnspan=2)
-                
-                master.update()
-                
-                total_size = 0
-                speed_list = []
-                for i in range(part_count):
-                    x = str(i)
-                    if not extension == "xc":
-                        if len(x) < 2:
-                            x = "0" + str(i)
-                    f = file_path + x
-                    total_size = total_size + os.stat(f).st_size
+            outputPath = os.path.join(outputDir, outputFile)
                     
-                bytes_remaining = total_size
-                
-                with open(output_file,'wb') as wfd:
-                    for i in range(part_count):
-                        x = str(i)
-                        if not extension == "xc":
-                            if len(x) < 2:
-                                x = "0" + str(i)
-                        f = file_path + x
-                        with open(f,'rb') as fd:
-                            current_part = i
-                            self.part_label.config(text=str(current_part + 1) + "/" + str(part_count))
-                            file_progress = 0
-
-                            READINTO_BUFSIZE = 1024 * 1024
-                                
-                            try:
-                                if "b" in fd.mode and "b" in wfd.mode and fd.readinto:
-                                        fsrc_readinto = fd.readinto
-                                        fdst_write = wfd.write
-                                        
-                                        length = 0
-                                        try:
-                                            file_size = os.stat(fd.fileno()).st_size
-                                        except OSError:
-                                            file_size = READINTO_BUFSIZE
-                                        length = min(file_size, READINTO_BUFSIZE)
-
-                                        copied = 0
-                                        elapsed = 0
-                                        bytes_transferred = 0
-                                        timer = 501
-                                        
-                                        with memoryview(bytearray(length)) as mv:
-                                            while True:
-                                                timer = timer + 1
-                                                
-                                                start = time.time()
-                                                
-                                                file_progress = copied / file_size
-                                                part_progress = (total_size - bytes_remaining) / total_size
-                                                file_progress_bar['value'] = 100 * file_progress
-                                                part_progress_bar['value'] = 100 * part_progress
-                                                self.file_label.config(text=str(round(100 * file_progress, 1)) + "%")
-                                                master.update()
-                                                
-                                                n = fsrc_readinto(mv)
-                                                if not n:
-                                                    break
-                                                elif n < length:
-                                                    with mv[:n] as smv:
-                                                        wfd.write(smv)
-                                                else:
-                                                    fdst_write(mv)
-                                                copied += n
-                                                
-                                                end = time.time()
-                                                elapsed = elapsed + end - start
-                                                bytes_transferred = bytes_transferred + n
-                                                
-                                                bytes_remaining = bytes_remaining - n
-                                                megabytes_remaining = bytes_remaining / 1000000
-                                                
-                                                if timer > 500:
-                                                    megabytes = bytes_transferred / 1000000
-                                                    
-                                                    speed = megabytes / elapsed
-                                                    speed_list.append(speed)
-                                                    avg_speed = sum(speed_list)/len(speed_list)
-                                                    
-                                                    time_remaining = int(megabytes_remaining / avg_speed)
-                                                    
-                                                    self.speed_label.config(text="Speed: " + str(round(speed, 1)) + "MB/s")
-                                                    
-                                                    seconds_remaining = int(time_remaining % 60)
-                                                    if seconds_remaining < 10:
-                                                        seconds_remaining = '0' + str(seconds_remaining)
-                                                    else:
-                                                        seconds_remaining = str(seconds_remaining)
-                                                    minutes_remaining = str(int(time_remaining / 60))
-                                                    
-                                                    self.eta_label.config(text="ETA: " + minutes_remaining + ":" + seconds_remaining)
-                                                    
-                                                    elapsed = 0
-                                                    bytes_transferred = 0
-                                                    timer = 0
-                            except AttributeError:
-                                pass
-
-                            length = shutil.COPY_BUFSIZE
-
-                            fsrc_read = fd.read
-                            fdst_write = wfd.write
-
-                            copied = 0
-                            while True:
-                                buf = fsrc_read(length)
-                                if not buf:
-                                    break
-                                fdst_write(buf)
-                                copied += len(buf)
-                
-                            
+        elif (filename[-3:] == 'xci' or filename[-3:] == 'nsp') and len(extension) == 3 and extension[1:].isdigit(): # .xci.00 or .nsp.00
+            outputFile = filename
+            outputPath = os.path.join(outputDir, outputFile)
                     
-        merge = Tk()
-        merge.title("Progress")
-        merge_win = Merge_dump_window(merge)
-        merge.destroy()
+        elif not extension and len(filename) == 2 and filename.isdigit(): # folder/00
+            outputFile = outputDir + '.' + 'nsp'
+            outputPath = os.path.join(outputDir, outputFile)
+                
+        if outputPath:
+            OpenFiles(self.parts, outputPath)
         
-    def get_input_entry(self):
-        filename = filedialog.askopenfilename(initialdir="./", title="Select your NX dump part")
-        extension = filename[filename.rfind('.') - len(filename) + 1:][:2]
+    def getInputEntry(self):
+        inputFile = filedialog.askopenfilename(initialdir="./", title="Select your NX dump part")
+        inputFile = os.path.realpath(inputFile)
+        inputDir = os.path.dirname(inputFile)
+        
+        splitPath = os.path.splitext(inputFile)
+        filename  = os.path.basename(splitPath[0])
+        extension = splitPath[1]
         
         if not filename:
             return
-            
-        if extension == "xc":
-            file_path = filename[:filename.rfind('.') - len(filename) + 1][2:]
-            part_num = filename[filename.rfind('.') - len(filename) + 1:][2:]
-            part_count = 0
-            
-            for f in glob.glob(file_path + "xc" + "*"):
-                if f[f.rfind('.') - len(f) + 1:][2:].isdigit():
-                    part_count += 1
-                    
-            for i in range(part_count):
-                if not os.path.isfile(file_path + "xc" + str(i)):
-                    messagebox.showinfo("Error", "Incomplete dump. Part(s) are missing.")
-                    return
-                
-            if not part_num.isdigit():
-                messagebox.showinfo("Error", "This file is either not a valid part file or has not been named correctly. Please view the Help tab for more information.")
-                return
-        else:
-            file_path = filename[:-2]
-            part_count = 0
-            
-            for f in glob.glob(file_path + "/*"):
-                f = f[-2:]
-                if f.isdigit():
-                    part_count += 1
-            
-            if part_count == 0:
-                messagebox.showinfo("Error", "This file is either not a valid part file or has not been named correctly. Please view the Help tab for more information.")
-                return
-                    
-            for i in range(part_count):
-                x = str(i)
-                if len(x) < 2:
-                    x = "0" + str(i)
-                if not os.path.isfile(file_path + x):
-                    messagebox.showinfo("Error", "Incomplete dump. Part(s) are missing." )
-                    return
-            
-        self.input_entry.delete(0, END)
-        self.input_entry.insert(0, filename)
         
-        if not self.output_entry.get():
-            self.output_entry.delete(0, END)
-            self.output_entry.insert(0, filename[:filename.rfind('/') - len(filename) + 1])
+        self.parts = []
         
-    def get_output_entry(self):
+        if (extension[:3] == '.xc' or extension[:3] == '.ns') and extension[3:].isdigit(): # .xc0 or .ns0
+            inputFiles = filename + extension[:3]
+            inputPath  = os.path.join(inputDir, inputFiles)
+            searchPath = inputPath + '*'
+            
+            for f in glob.glob(searchPath):
+                e = os.path.splitext(f)[1]
+                if e[3:].isdigit():
+                    self.parts.append(f)
+                    
+        elif (filename[-3:] == 'xci' or filename[-3:] == 'nsp') and len(extension) == 3 and extension[1:].isdigit(): # .xci.00 or .nsp.00
+            inputFiles = filename + '.'
+            inputPath  = os.path.join(inputDir, inputFiles)
+            searchPath = inputPath + '*'
+            
+            for f in glob.glob(searchPath):
+                e = os.path.splitext(f)[1]
+                if e[1:].isdigit():
+                    self.parts.append(f)
+                    
+        elif not extension and len(filename) == 2 and filename.isdigit(): # folder/00
+            inputFiles = ''
+            inputPath  = os.path.join(inputDir, inputFiles)
+            searchPath = inputPath + '*'
+            
+            for f in glob.glob(searchPath):
+                n, e = os.path.splitext(f)
+                n = os.path.basename(n)
+                if not e and len(n) == 2 and n.isdigit():
+                    self.parts.append(f)
+                    
+        try:
+            if len(self.parts) < 1:
+                WrongTypeError()
+                return
+        except:
+            WrongTypeError()
+            return
+            
+        self.inputEntry.delete(0, END)
+        self.inputEntry.insert(0, inputFile)
+        
+        if not self.outputEntry.get():
+            self.outputEntry.delete(0, END)
+            self.outputEntry.insert(0, inputDir)
+        
+    def getOutputEntry(self):
         dirname = filedialog.askdirectory(initialdir="./", title="Select where you'd like to place your merged dump")
+        dirname = os.path.realpath(dirname)
         if not dirname:
             return
-        dirname += '/'
-        self.output_entry.delete(0, END)
-        self.output_entry.insert(0, dirname)
+        self.outputEntry.delete(0, END)
+        self.outputEntry.insert(0, dirname)
         
-class Help:
-    def __init__(self, master):
+class WrongTypeError:
+    titleString = 'Error'
+    strings = [
+        'Parts must be in one of the following formats:',
+        ' - file.xc0, file.xc1, file.xc2, etc',
+        ' - file.xci.00, file.xci.01, file.xci.02, etc',
+        ' - file.ns0, file.ns1, file.ns2, etc',
+        ' - file.nsp.00, file.nsp.01, file.nsp.02, etc',
+        ' - folder/00, folder/01, folder/02, etc',
+    ]
+    
+    def __init__(self):
+        errorTk = Tk()
+        errorTk.title(self.titleString)
+        self.createWindow(errorTk)
+
+    def createWindow(self, master):
         frame = Frame(master)
         frame.grid(padx=20, pady=10)
+        
+        strCount = len(self.strings)
+        
+        for i in range(0,strCount):
+            self.intro_label = Label(frame, text=self.strings[i], anchor=E, justify=LEFT, wraplength=400)
+            self.intro_label.grid(row=i, column=0, sticky="W", pady=0)
+            
+        button = Button(frame, text='OK', command=master.destroy)
+        button.grid(row=strCount+1, column=0, pady=(10,0))
+        
+class OpenFiles:
+    titleString = 'Merging Files'
+
+    def __init__(self, parts, outputPath):
+        self.parts      = parts
+        self.outputPath = outputPath
+        
+        self.openFilesTk = Tk()
+        self.openFilesTk.title(self.titleString)
+        self.createWindow(self.openFilesTk)
+        
+        self.initVar()
+        self.startMerge()
+    
+    def initVar(self):
+        self.totalSize = 0
+        #self.speed     = 0
+        #self.totalTime = 0
+        self.fileSize  = []
+        
+        for (i, f) in enumerate(self.parts):
+            self.fileSize.append(os.path.getsize(f))
+            self.totalSize += self.fileSize[i]
+            
+        #self.bytesRemaining = self.totalSize
+        self.bytesWritten   = 0
+
+    def createWindow(self, master):
+        frame = Frame(master)
+        frame.grid(padx=20, pady=10, column=0)
+        
+        progressLabel = Label(frame, text="Progress")
+        progressLabel.grid(columnspan=2)
+        
+        self.currentPart = 0
+        self.currentByte = 0
+        #eta = 0
+        
+        self.partProgressBar = Progressbar(frame, orient = HORIZONTAL, mode = 'determinate')
+        self.partProgressBar.grid(row=0, column=0)
+        
+        self.fileProgressBar = Progressbar(frame, orient = HORIZONTAL, mode = 'determinate')
+        self.fileProgressBar.grid(row=1, column=0, padx=20)
        
-        self.intro_label = Label(frame, text="To select dump parts, select one file from a dump. nxDumpMerger will then detect all other dumps in the directory.", anchor=E, justify=LEFT, wraplength=400)
-        self.intro_label.grid(row=1, column=0, sticky="W")
+        self.partLabel = Label(frame)
+        self.partLabel.grid(row=0, column=1, pady=10)
        
-        self.nsp_label = Label(frame, text="NSPs should be in the format game.nsp/00, game.nsp/01, game.nsp/02 and so on, where game.nsp is a folder.", anchor=E, justify=LEFT, wraplength=400)
-        self.nsp_label.grid(row=3, column=0, sticky="W")
-       
-        self.xci_label = Label(frame, text="XCIs should be in the format game.xc0, game.xc1, game.xc2 and so on.", anchor=E, justify=LEFT, wraplength=400)
-        self.xci_label.grid(row=4, column=0, sticky="W")
-       
-        self.version_label = Label(frame, text="nxDumpMerger is a simple merging application developed by emiyl, designed to be used with nxdumptool.", anchor=E, justify=LEFT, wraplength=400)
-        self.version_label.grid(row=5, column=0, sticky="W")
+        self.fileLabel = Label(frame)
+        self.fileLabel.grid(row=1, column=1, pady=10)
+        
+        #self.speedLabel = Label(frame, text="Speed:")
+        #self.speedLabel.grid(columnspan=2)
+        
+        #self.etaLabel = Label(frame, text="ETA:")
+        #self.etaLabel.grid(columnspan=2)
+        
+    def updateWindow(self):
+        fileProgress = self.currentByte / self.fileSize[self.currentPart]
+        partProgress = self.bytesWritten / self.totalSize
+        
+        self.fileProgressBar['value'] = 100 * fileProgress
+        self.partProgressBar['value'] = 100 * partProgress
+        
+        fileProgressStr = fileProgress * 100
+        fileProgressStr = round(fileProgressStr, 1)
+        fileProgressStr = str(fileProgressStr)
+        
+        currentPartStr = self.currentPart + 1
+        currentPartStr = str(currentPartStr)
+        partCountStr   = str(self.partCount)
+        
+        #speedStr = self.speed / 1024**2
+        #speedStr = str(int(speedStr))
+        
+        #timeStr = self.timeRemaining
+        #if timeStr > 3599:
+        #    timeStr = time.strftime('%H:%M:%S', time.gmtime(timeStr))
+        #else:
+        #    timeStr = time.strftime('%M:%S', time.gmtime(timeStr))
+        
+        strings = [
+            fileProgressStr + '%',
+            currentPartStr + '/' + partCountStr,
+            #'Speed: ' + speedStr + ' MB/s',
+            #'ETA: ' + timeStr
+        ]
+            
+        self.fileLabel.config(text=strings[0])
+        self.partLabel.config(text=strings[1])
+        #self.speedLabel.config(text=strings[2])
+        #self.etaLabel.config(text=strings[3])
+        
+        self.openFilesTk.update()
+
+    def startMerge(self):
+        self.currentByte = 0
+        self.partTime    = 0
+        self.partCount   = len(self.parts)
+        with open(self.outputPath,'wb') as fdst:
+            for (i, f) in enumerate(self.parts):
+                self.currentPart = i
+                self.currentByte = 0
+                
+                with open(f,'rb') as fsrc:
+                    self.copyfileobj_readinto(fsrc, fdst)
+
+    def copyfileobj_readinto(self, fsrc, fdst, length=0):
+        READINTO_BUFSIZE = 1024 * 1024
+        fsrc_readinto = fsrc.readinto
+        fdst_write = fdst.write
+
+        if not length:
+            try:
+                file_size = os.stat(fsrc.fileno()).st_size
+            except OSError:
+                file_size = READINTO_BUFSIZE
+            length = min(file_size, READINTO_BUFSIZE)
+            
+        timeLoops  = []
+        byteLoops  = []
+        speedLoops = []
+        counter    = 0
+
+        with memoryview(bytearray(length)) as mv:
+            while True:
+                #start = time.time()
+                n = fsrc_readinto(mv)
+                if not n:
+                    break
+                if n < length:
+                    with mv[:n] as smv:
+                        fdst.write(smv)
+                else:
+                    fdst_write(mv)
+                #end = time.time()
+                
+                #t = end - start
+                
+                #timeLoops.insert(0, t)
+                #byteLoops.insert(0, n)
+                
+                #if len(timeLoops) > 100:
+                #    timeLoops.remove(timeLoops[100])
+                #if len(byteLoops) > 100:
+                #    byteLoops.remove(byteLoops[100])
+                
+                #avgTime = sum(timeLoops) / len(timeLoops)
+                #avgByte = sum(byteLoops) / len(byteLoops)
+                
+                #if avgTime > 0:
+                #    speed = avgByte / avgTime
+                #    speedLoops.insert(0, speed)
+                
+                #    if len(speedLoops) > 100:
+                #        speedLoops.remove(speedLoops[100])
+                    
+                #if len(speedLoops) > 0:
+                #    self.speed = sum(speedLoops) / len(speedLoops)
+                #    self.speed = self.speed
+                #else:
+                #    self.speed = 0
+                
+                #self.partTime       += t
+                #self.totalTime      += t
+                self.currentByte    += n
+                self.bytesWritten   += n
+                #self.bytesRemaining -= n
+                
+                #if self.speed > 0:
+                #    self.timeRemaining = self.bytesRemaining / self.speed
+                #else:
+                #    self.timeRemaining = 9999
+                
+                counter += 1
+                if counter > 10:
+                    self.updateWindow()
+                    counter = 0
+                
+        self.updateWindow()
+        
+class About:
+    titleString = 'About nxDumpMerger'
+    strings = [
+        'nxDumpMerger is a simple merging application developed by emiyl, designed to be used with nxdumptool.',
+        'To select dump parts, select one file from a dump. nxDumpMerger will then detect all other dumps in the directory.',
+        'Parts must be in one of the following formats:'
+    ]
+    formats = [
+        ' - file.xc0, file.xc1, file.xc2, etc',
+        ' - file.xci.00, file.xci.01, file.xci.02, etc',
+        ' - file.ns0, file.ns1, file.ns2, etc',
+        ' - file.nsp.00, file.nsp.01, file.nsp.02, etc',
+        ' - folder/00, folder/01, folder/02, etc'
+    ]
+    
+    def __init__(self):
+        aboutTk = Tk()
+        aboutTk.title(self.titleString)
+        self.createWindow(aboutTk)
+
+    def createWindow(self, master):
+        frame = Frame(master)
+        frame.grid(padx=20, pady=10)
+        
+        strCount = len(self.strings)
+        fmtCount = len(self.formats)
+        
+        for i in range(0,strCount):
+            label = Label(frame, text=self.strings[i], anchor=E, justify=LEFT, wraplength=400)
+            label.grid(row=i, column=0, sticky="W", pady=2)
+        
+        for i in range(0, fmtCount):
+            label = Label(frame, text=self.formats[i], anchor=E, justify=LEFT, wraplength=400)
+            label.grid(row=strCount+i, column=0, sticky="W", pady=0)
+            
+        button = Button(frame, text='OK', command=master.destroy)
+        button.grid(row=strCount+fmtCount+1, column=0, pady=(10,0))
 
 app = App(root)
-root.title("nxDumpMerger v" + version)
+root.title(title)
 root.mainloop()
