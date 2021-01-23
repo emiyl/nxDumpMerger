@@ -54,6 +54,8 @@ jobs:
 
             - name: Upload release asset (python script)
               uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   upload_url: ${{ steps.create_release.outputs.upload_url }}
                   asset_path: nxDumpMerger.py
@@ -62,6 +64,8 @@ jobs:
 
             - name: Upload release asset (builded dir)
               uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   upload_url: ${{ steps.create_release.outputs.upload_url }}
                   asset_path: nxDumpMerger_Windows_${{ matrix.architecture }}.zip
@@ -70,6 +74,8 @@ jobs:
 
             - name: Upload release asset (builded one file)
               uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   upload_url: ${{ steps.create_release.outputs.upload_url }}
                   asset_path: nxDumpMerger_Windows_${{ matrix.architecture }}.exe
