@@ -44,12 +44,13 @@ jobs:
             - name: Create release
               id: create_release
               uses: actions/create-release@v1
+              env:
+                  token: ${{ secrets.GITHUB_TOKEN }}
               with:
                   tag_name: ${{ steps.get_version.outputs.VERSION }}
                   release_name: ${{ steps.get_version.outputs.VERSION }}
                   draft: false
                   prerelease: false
-                  token: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Upload release asset (python script)
               uses: actions/upload-release-asset@v1
