@@ -36,19 +36,14 @@ jobs:
                   cd dist-file
                   move nxDumpMerger.exe ..\nxDumpMerger_Windows_${{ matrix.architecture }}.exe
 
-            - name: Get the tag version
-              id: get_version
-              run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-              shell: bash
-
             - name: Create release
               id: create_release
               uses: actions/create-release@v1
               env:
                   token: ${{ secrets.GITHUB_TOKEN }}
               with:
-                  tag_name: ${{ steps.get_version.outputs.VERSION }}
-                  release_name: ${{ steps.get_version.outputs.VERSION }}
+                  tag_name: ${{ github.ref }}
+                  release_name: ${{ github.ref }}
                   draft: false
                   prerelease: false
 
