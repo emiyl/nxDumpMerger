@@ -36,14 +36,41 @@ jobs:
                   cd dist-file
                   move nxDumpMerger.exe ..\nxDumpMerger_Windows_${{ matrix.architecture }}.exe
 
-            - name: Upload artifact (one dir)
-              uses: actions/upload-artifact@v2
-              with:
-                  name: uploads
-                  path: nxDumpMerger_Windows_${{ matrix.architecture }}.zip
+            - name: Get the tag version
+              id: get_version
+              run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+              shell: bash
 
-            - name: Upload artifact (one file)
-              uses: actions/upload-artifact@v2
+            - name: Create release
+              id: create_release
+              uses: actions/create-release@v1
               with:
-                  name: uploads
-                  path: nxDumpMerger_Windows_${{ matrix.architecture }}.exe
+                  tag_name: ${{ steps.get_version.outputs.VERSION }}
+                  release_name: ${{ steps.get_version.outputs.VERSION }}
+                  draft: false
+                  prerelease: false
+                  token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Upload release asset (python script)
+              uses: actions/upload-release-asset@v1
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: nxDumpMerger.py
+                  asset_name: nxDumpMerger.py
+                  asset_content_type: text/x-python
+
+            - name: Upload release asset (builded dir)
+              uses: actions/upload-release-asset@v1
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: nxDumpMerger_Windows_${{ matrix.architecture }}.zip
+                  asset_name: nxDumpMerger_Windows_${{ matrix.architecture }}.zip
+                  asset_content_type: application/zip
+
+            - name: Upload release asset (builded one file)
+              uses: actions/upload-release-asset@v1
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: nxDumpMerger_Windows_${{ matrix.architecture }}.exe
+                  asset_name: nxDumpMerger_Windows_${{ matrix.architecture }}.exe
+                  asset_content_type: application/x-dosexec
