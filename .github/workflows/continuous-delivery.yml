@@ -81,15 +81,6 @@ jobs:
                   asset_name: nxDumpMerger_Windows_${{ matrix.architecture }}.exe
                   asset_content_type: application/x-dosexec
 
-            - name: Save the GitHub Release URL
-              run: echo ${{ steps.create_release.outputs.upload_url }} > upload_url.txt
-
-            - name: Upload the GitHub Release URL
-              uses: actions/upload-artifact@v2
-              with:
-                  name: upload_url
-                  path: upload_url.txt
-
     build-x64:
         runs-on: windows-latest
         needs: build-x86
