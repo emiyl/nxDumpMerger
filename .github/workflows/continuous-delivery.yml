@@ -67,8 +67,8 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: nxDumpMerger_Windows_${{ matrix.architecture }}.zip
-                  asset_name: nxDumpMerger_Windows_${{ matrix.architecture }}.zip
+                  asset_path: nxDumpMerger_Windows_x86.zip
+                  asset_name: nxDumpMerger_Windows_x86.zip
                   asset_content_type: application/zip
 
             - name: Upload release asset (builded one file)
@@ -77,8 +77,8 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: nxDumpMerger_Windows_${{ matrix.architecture }}.exe
-                  asset_name: nxDumpMerger_Windows_${{ matrix.architecture }}.exe
+                  asset_path: nxDumpMerger_Windows_x86.exe
+                  asset_name: nxDumpMerger_Windows_x86.exe
                   asset_content_type: application/x-dosexec
 
     build-x64:
