@@ -14,7 +14,7 @@ else:
     from tkinter.ttk import Progressbar
 
 root = Tk()
-version = "1.0.0"
+version = "1.0.1"
 title = f"nxDumpMerger {version}"
 
 class App:
