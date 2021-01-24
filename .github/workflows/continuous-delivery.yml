@@ -118,24 +118,14 @@ jobs:
                   cd dist-file
                   move nxDumpMerger.exe ..\nxDumpMerger_Windows_x64.exe
 
-            - name: Upload release asset (python script)
-              uses: actions/upload-release-asset@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  upload_url: ${{ needs.build-x86.outputs.upload_url }}
-                  asset_path: nxDumpMerger.py
-                  asset_name: nxDumpMerger.py
-                  asset_content_type: text/x-python
-
             - name: Upload release asset (builded dir)
               uses: actions/upload-release-asset@v1
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   upload_url: ${{ needs.build-x86.outputs.upload_url }}
-                  asset_path: nxDumpMerger_Windows_${{ matrix.architecture }}.zip
-                  asset_name: nxDumpMerger_Windows_${{ matrix.architecture }}.zip
+                  asset_path: nxDumpMerger_Windows_x64.zip
+                  asset_name: nxDumpMerger_Windows_x64.zip
                   asset_content_type: application/zip
 
             - name: Upload release asset (builded one file)
@@ -144,6 +134,6 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: nxDumpMerger_Windows_${{ matrix.architecture }}.exe
-                  asset_name: nxDumpMerger_Windows_${{ matrix.architecture }}.exe
+                  asset_path: nxDumpMerger_Windows_x64.exe
+                  asset_name: nxDumpMerger_Windows_x64.exe
                   asset_content_type: application/x-dosexec
