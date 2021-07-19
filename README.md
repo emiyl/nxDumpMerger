@@ -1,6 +1,9 @@
 # nxDumpMerger
 Simple merger for Nintendo Switch dumped content, designed to merge dumps from nxdumptool.
 
+# Important
+The python script is writen in Python 3, use the "python3" command instead of "python" when use this program. Tkinter is bundled with a regular Python 3 install, so there's no need to install that. 
+
 ## Supported filename formats
 
 - `file.ns0`, `file.ns1`, etc
