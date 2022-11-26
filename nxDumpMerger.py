@@ -14,8 +14,8 @@ else:
     from tkinter.ttk import Progressbar
 
 root = Tk()
-version = [1,0,0]
-title = f"nxDumpMerger {version[0]}.{version[1]}.{version[2]}"
+version = "1.0.1"
+title = f"nxDumpMerger {version}"
 
 class App:
     instructionString = "Select one file part and nxDumpMerger will automatically select the rest."

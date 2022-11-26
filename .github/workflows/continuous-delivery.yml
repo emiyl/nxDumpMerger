@@ -1,0 +1,130 @@
+name: Continuous Delivery
+
+on:
+    push:
+        tags:
+            - "v*"
+
+jobs:
+    build-x86:
+        runs-on: windows-latest
+        outputs:
+              upload_url: ${{ steps.create_release.outputs.upload_url }}
+
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Setup Python
+              uses: actions/setup-python@v2
+              with:
+                  python-version: "3.6"
+                  architecture: "x86"
+
+            - name: Install pyinstaller
+              run: python -m pip install pyinstaller
+
+            - name: Build package to one directory
+              run: |
+                  python -m PyInstaller -w -D --clean -y --distpath dist-dir nxDumpMerger.py
+                  cd dist-dir
+                  powershell Compress-Archive nxDumpMerger ..\nxDumpMerger_Windows_x86.zip
+
+            - name: Build package to one file
+              run: |
+                  python -m PyInstaller -w -F --clean -y --distpath dist-file nxDumpMerger.py
+                  cd dist-file
+                  move nxDumpMerger.exe ..\nxDumpMerger_Windows_x86.exe
+
+            - name: Get the tag version
+              id: get_version
+              run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+              shell: bash
+
+            - name: Create release
+              id: create_release
+              uses: actions/create-release@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  tag_name: ${{ steps.get_version.outputs.VERSION }}
+                  release_name: ${{ steps.get_version.outputs.VERSION }}
+                  draft: false
+                  prerelease: false
+
+            - name: Upload release asset (python script)
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: nxDumpMerger.py
+                  asset_name: nxDumpMerger.py
+                  asset_content_type: text/x-python
+
+            - name: Upload release asset (builded dir)
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: nxDumpMerger_Windows_x86.zip
+                  asset_name: nxDumpMerger_Windows_x86.zip
+                  asset_content_type: application/zip
+
+            - name: Upload release asset (builded one file)
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: nxDumpMerger_Windows_x86.exe
+                  asset_name: nxDumpMerger_Windows_x86.exe
+                  asset_content_type: application/x-dosexec
+
+    build-x64:
+        runs-on: windows-latest
+        needs: build-x86
+
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Setup Python
+              uses: actions/setup-python@v2
+              with:
+                  python-version: "3.6"
+                  architecture: "x64"
+
+            - name: Install pyinstaller
+              run: python -m pip install pyinstaller
+
+            - name: Build package to one directory
+              run: |
+                  python -m PyInstaller -w -D --clean -y --distpath dist-dir nxDumpMerger.py
+                  cd dist-dir
+                  powershell Compress-Archive nxDumpMerger ..\nxDumpMerger_Windows_x64.zip
+
+            - name: Build package to one file
+              run: |
+                  python -m PyInstaller -w -F --clean -y --distpath dist-file nxDumpMerger.py
+                  cd dist-file
+                  move nxDumpMerger.exe ..\nxDumpMerger_Windows_x64.exe
+
+            - name: Upload release asset (builded dir)
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ needs.build-x86.outputs.upload_url }}
+                  asset_path: nxDumpMerger_Windows_x64.zip
+                  asset_name: nxDumpMerger_Windows_x64.zip
+                  asset_content_type: application/zip
+
+            - name: Upload release asset (builded one file)
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ needs.build-x86.outputs.upload_url }}
+                  asset_path: nxDumpMerger_Windows_x64.exe
+                  asset_name: nxDumpMerger_Windows_x64.exe
+                  asset_content_type: application/x-dosexec
