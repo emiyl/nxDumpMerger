@@ -123,7 +123,7 @@ class App:
         if (extension[:3] == '.xc' or extension[:3] == '.ns') and extension[3:].isdigit(): # .xc0 or .ns0
             inputFiles = filename + extension[:3]
             inputPath  = os.path.join(inputDir, inputFiles)
-            searchPath = inputPath + '*'
+            searchPath = glob.escape(inputPath) + '*'
             
             for f in glob.glob(searchPath):
                 e = os.path.splitext(f)[1]
@@ -133,7 +133,7 @@ class App:
         elif (filename[-3:] == 'xci' or filename[-3:] == 'nsp') and len(extension) == 3 and extension[1:].isdigit(): # .xci.00 or .nsp.00
             inputFiles = filename + '.'
             inputPath  = os.path.join(inputDir, inputFiles)
-            searchPath = inputPath + '*'
+            searchPath = glob.escape(inputPath) + '*'
             
             for f in glob.glob(searchPath):
                 e = os.path.splitext(f)[1]
@@ -143,7 +143,7 @@ class App:
         elif not extension and len(filename) == 2 and filename.isdigit(): # folder/00
             inputFiles = ''
             inputPath  = os.path.join(inputDir, inputFiles)
-            searchPath = inputPath + '*'
+            searchPath = glob.escape(inputPath) + '*'
             
             for f in glob.glob(searchPath):
                 n, e = os.path.splitext(f)
