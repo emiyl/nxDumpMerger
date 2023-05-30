@@ -121,7 +121,7 @@ class App:
         self.parts = []
         
         if (extension[:3] == '.xc' or extension[:3] == '.ns') and extension[3:].isdigit(): # .xc0 or .ns0
-            inputFiles = filename + extension[:3]
+            inputFiles = glob.escape(filename + extension[:3])
             inputPath  = os.path.join(inputDir, inputFiles)
             searchPath = inputPath + '*'
             
